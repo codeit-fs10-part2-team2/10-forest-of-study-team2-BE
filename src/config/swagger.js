@@ -13,8 +13,12 @@ const options = {
     },
     servers: [
       {
+        url: process.env.API_URL || `http://localhost:${process.env.PORT || 3000}`,
+        description: process.env.NODE_ENV === 'production' ? 'Production server' : 'Development server',
+      },
+      {
         url: `http://localhost:${process.env.PORT || 3000}`,
-        description: 'Development server',
+        description: 'Local development server',
       },
     ],
     components: {
