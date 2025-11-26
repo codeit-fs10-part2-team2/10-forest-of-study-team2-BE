@@ -1,0 +1,94 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Study {
+  study_id           Int      @id @default(autoincrement())
+  nickname           String   @db.VarChar(255)
+  study_name         String   @db.VarChar(255)
+  study_introduction String?  @db.VarChar(255)
+  password           String?  @db.VarChar(255)
+  background         Int?     // CHECK (background >= 0 AND background <= 7)
+  point_sum          Int      @default(0)
+  concentration_time String?  @db.VarChar(8) // TIME DEFAULT '00:25:00' (HH:MM:SS 형식)
+  createdAt          DateTime @default(now()) @map("createdAt")
+  updatedAt          DateTime? @updatedAt @map("updatedAt")
+
+  // Relations
+  points             Point[]
+  habits             Habit[]
+  habitFullfillments HabitFullfillment[]
+  emojis             Emoji[]
+
+  @@map("Study")
+}
+
+model Point {
+  point_pk      Int       @id @default(autoincrement())
+  study_id      Int
+  point_content String    @db.VarChar(255)
+  point         Int?
+  createdAt     DateTime  @default(now()) @map("createdAt")
+  updatedAt     DateTime? @updatedAt @map("updatedAt")
+
+  // Relations
+  study Study @relation(fields: [study_id], references: [study_id], onDelete: Cascade)
+
+  @@map("Point")
+}
+
+model Habit {
+  habit_pk   Int       @id @default(autoincrement())
+  study_id   Int
+  habit_name String    @db.VarChar(255)
+  isRemoved  Boolean   @default(false)
+  createdAt  DateTime  @default(now()) @map("createdAt")
+  updatedAt  DateTime? @updatedAt @map("updatedAt")
+
+  // Relations
+  study            Study                 @relation(fields: [study_id], references: [study_id], onDelete: Cascade)
+  habitFullfillments HabitFullfillment[]
+
+  @@unique([study_id, habit_name])
+  @@map("Habit")
+}
+
+model HabitFullfillment {
+  habit_fullfillment_pk       Int       @id @default(autoincrement())
+  habit_pk                    Int
+  study_id                    Int?
+  habit_fullfillment_year     Int
+  habit_fullfillment_week     Int
+  habit_fullfillment_day      Int
+  createdAt                   DateTime  @default(now()) @map("createdAt")
+  updatedAt                   DateTime? @updatedAt @map("updatedAt")
+
+  // Relations
+  habit Habit @relation(fields: [habit_pk], references: [habit_pk], onDelete: Restrict)
+  study Study? @relation(fields: [study_id], references: [study_id], onDelete: Cascade)
+
+  @@map("Habit_Fullfillment")
+}
+
+model Emoji {
+  emoji_id   Int       @id @default(autoincrement())
+  study_id   Int
+  emoji_name String    @db.VarChar(255) // Unicode 이모지 문자 저장 (예: "😀")
+  emoji_hit  Int       @default(0)
+  createdAt  DateTime  @default(now()) @map("createdAt")
+  updatedAt  DateTime? @updatedAt @map("updatedAt")
+
+  // Relations
+  study Study @relation(fields: [study_id], references: [study_id], onDelete: Cascade)
+
+  @@unique([study_id, emoji_name])
+  @@map("Emoji")
+}
