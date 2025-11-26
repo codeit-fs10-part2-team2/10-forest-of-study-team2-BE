@@ -1,16 +1,20 @@
 const getAllowedOrigins = () => {
-  if (process.env.CORS_ORIGIN) {
-    return process.env.CORS_ORIGIN.split(',').map(origin => origin.trim());
-  }
-  
-  return [
+  const defaultOrigins = [
     'http://localhost:3000',
     'http://localhost:3001',
     'http://localhost:5173',
     'http://localhost:5174',
     'http://127.0.0.1:3000',
     'http://127.0.0.1:5173',
+    'https://forestofstudy-ew74jenyo-taetaehoos-projects.vercel.app',
   ];
+  
+  if (process.env.CORS_ORIGIN) {
+    const envOrigins = process.env.CORS_ORIGIN.split(',').map(origin => origin.trim());
+    return [...defaultOrigins, ...envOrigins];
+  }
+  
+  return defaultOrigins;
 };
 
 const corsOptions = {
