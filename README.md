@@ -16,27 +16,6 @@
 
 `.env` 파일을 생성하고 다음 내용을 입력하세요:
 
-```env
-# Database Configuration - Individual Variables
-DB_URL=your-db-host
-DB_ADMIN=your-db-user
-DB_PORT=3306
-DB_PASSWORD=your-db-password
-DB_NAME=your-db-name
-DB_SSL_MODE=REQUIRED
-
-# Server Configuration
-PORT=3000
-NODE_ENV=development
-
-# API Configuration
-API_URL=http://localhost:3000
-
-# CORS Configuration
-CORS_ORIGIN=https://forestofstudy-ew74jenyo-taetaehoos-projects.vercel.app
-CORS_ALLOW_ALL=false
-```
-
 ### 2. 의존성 설치
 
 ```bash
@@ -116,12 +95,17 @@ npm start
 프론트엔드 URL이 기본적으로 허용됩니다:
 - 로컬 개발 환경 (localhost:3000, 5173 등)
 - Vercel 배포 URL: `https://forestofstudy-ew74jenyo-taetaehoos-projects.vercel.app`
+- Netlify 배포 URL: `https://foreststudy.netlify.app`
 
 추가 프론트엔드 URL을 허용하려면 `.env` 파일의 `CORS_ORIGIN`에 쉼표로 구분하여 추가하세요:
 
 ```env
 CORS_ORIGIN=https://example.com,https://another-domain.com
 ```
+
+## MIME 타입 설정
+
+JavaScript 파일이 올바른 MIME 타입 (`text/javascript`)으로 서빙되도록 설정되어 있습니다. `.js` 및 `.mjs` 파일이 `application/octet-stream` 대신 `text/javascript`로 서빙됩니다.
 
 ## Prisma 스튜디오
 

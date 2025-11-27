@@ -3,10 +3,56 @@ const cors = require('cors');
 const swaggerUi = require('swagger-ui-express');
 const swaggerSpec = require('./config/swagger');
 const corsOptions = require('./config/cors');
+const mime = require('mime-types');
 
 require('./config/database');
 
+mime.types['js'] = 'text/javascript';
+mime.types['mjs'] = 'text/javascript';
+
+try {
+  const send = require('send');
+  send.mime.define({
+    'text/javascript': ['js', 'mjs'],
+  });
+} catch (e) {
+  console.warn('send module not available for MIME type override');
+}
+
 const app = express();
+
+app.use((req, res, next) => {
+  const originalSend = res.send;
+  const originalSendFile = res.sendFile;
+  const originalSetHeader = res.setHeader;
+  
+  res.setHeader = function(name, value) {
+    if (name.toLowerCase() === 'content-type') {
+      if (req.url.match(/\.(js|mjs)$/i) && value === 'application/octet-stream') {
+        value = 'text/javascript; charset=utf-8';
+      }
+    }
+    return originalSetHeader.call(this, name, value);
+  };
+  
+  res.send = function(body) {
+    if (req.url.match(/\.(js|mjs)$/i)) {
+      this.setHeader('Content-Type', 'text/javascript; charset=utf-8');
+    }
+    return originalSend.call(this, body);
+  };
+  
+  res.sendFile = function(path, options, callback) {
+    if (typeof path === 'string' && path.match(/\.(js|mjs)$/i)) {
+      if (!options) options = {};
+      options.headers = options.headers || {};
+      options.headers['Content-Type'] = 'text/javascript; charset=utf-8';
+    }
+    return originalSendFile.call(this, path, options, callback);
+  };
+  
+  next();
+});
 
 app.use(cors(corsOptions));
 

@@ -7,21 +7,29 @@ const getAllowedOrigins = () => {
     'http://127.0.0.1:3000',
     'http://127.0.0.1:5173',
     'https://forestofstudy-ew74jenyo-taetaehoos-projects.vercel.app',
+    'https://foreststudy.netlify.app',
   ];
   
   if (process.env.CORS_ORIGIN) {
-    const envOrigins = process.env.CORS_ORIGIN.split(',').map(origin => origin.trim());
+    const envOrigins = process.env.CORS_ORIGIN.split(',').map(origin => origin.trim().replace(/\/+$/, ''));
     return [...defaultOrigins, ...envOrigins];
   }
   
   return defaultOrigins;
 };
 
+const normalizeOrigin = (origin) => {
+  if (!origin) return origin;
+  return origin.replace(/\/+$/, '');
+};
+
 const corsOptions = {
   origin: (origin, callback) => {
     const allowedOrigins = getAllowedOrigins();
+    const normalizedOrigin = normalizeOrigin(origin);
+    const normalizedAllowedOrigins = allowedOrigins.map(normalizeOrigin);
     
-    if (!origin || allowedOrigins.includes(origin)) {
+    if (!origin || normalizedAllowedOrigins.includes(normalizedOrigin)) {
       callback(null, true);
     } else {
       if (process.env.NODE_ENV === 'development' && process.env.CORS_ALLOW_ALL === 'true') {
