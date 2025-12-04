@@ -35,14 +35,20 @@ const emojiService = {
         emoji_hit: e.emoji_hit,
       })));
       
-      const existingEmoji = await tx.emoji.findFirst({
-        where: {
-          study_id: studyIdInt,
-          emoji_name: emojiNameClean,
-        },
+      const existingEmoji = allEmojis.find(e => {
+        const matches = e.emoji_name === emojiNameClean;
+        if (!matches) {
+          console.log('[createEmoji] Emoji mismatch:', {
+            db_emoji: e.emoji_name,
+            db_bytes: Buffer.from(e.emoji_name).toString('hex'),
+            request_emoji: emojiNameClean,
+            request_bytes: Buffer.from(emojiNameClean).toString('hex'),
+          });
+        }
+        return matches;
       });
 
-      console.log('[createEmoji] Existing emoji found:', existingEmoji ? {
+      console.log('[createEmoji] Existing emoji found after client-side comparison:', existingEmoji ? {
         emoji_id: existingEmoji.emoji_id,
         emoji_name: existingEmoji.emoji_name,
         emoji_name_bytes: Buffer.from(existingEmoji.emoji_name).toString('hex'),
