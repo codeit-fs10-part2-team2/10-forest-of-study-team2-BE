@@ -96,7 +96,7 @@ const emojiService = {
           },
         });
         
-        console.log('[createEmoji] Emoji created:', {
+        console.log('[createEmoji] Emoji created successfully:', {
           emoji_id: created.emoji_id,
           emoji_name: created.emoji_name,
           emoji_hit: created.emoji_hit,
@@ -105,19 +105,24 @@ const emojiService = {
         return created;
       } catch (error) {
         if (error.code === 'P2002' || error.message?.includes('Unique constraint')) {
-          console.log('[createEmoji] Unique constraint error - emoji already exists, trying to find and update');
+          console.log('[createEmoji] Create failed - unique constraint error, finding existing emoji by byte comparison');
           
-          const foundEmoji = await tx.emoji.findFirst({
+          const allEmojisRetry = await tx.emoji.findMany({
             where: {
               study_id: studyIdInt,
-              emoji_name: emojiNameClean,
             },
           });
           
+          const foundEmoji = allEmojisRetry.find(e => {
+            const dbEmojiBytes = Buffer.from(e.emoji_name).toString('hex');
+            return dbEmojiBytes === requestEmojiBytes;
+          });
+          
           if (foundEmoji) {
-            console.log('[createEmoji] Found existing emoji after unique constraint error:', {
+            console.log('[createEmoji] Found existing emoji by byte comparison, updating:', {
               emoji_id: foundEmoji.emoji_id,
               emoji_name: foundEmoji.emoji_name,
+              emoji_name_bytes: Buffer.from(foundEmoji.emoji_name).toString('hex'),
               emoji_hit: foundEmoji.emoji_hit,
             });
             
@@ -130,14 +135,10 @@ const emojiService = {
               },
             });
             
-            console.log('[createEmoji] Emoji updated after unique constraint error:', {
-              emoji_id: updated.emoji_id,
-              emoji_name: updated.emoji_name,
-              emoji_hit: updated.emoji_hit,
-            });
-            
             return updated;
           }
+          
+          throw new Error(`Emoji exists in DB but could not be found by byte comparison. Request: ${emojiNameClean} (${requestEmojiBytes})`);
         }
         throw error;
       }
