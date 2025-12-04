@@ -87,21 +87,60 @@ const emojiService = {
 
       console.log('[createEmoji] Creating new emoji');
       
-      const created = await tx.emoji.create({
-        data: {
-          study_id: studyIdInt,
-          emoji_name: emojiNameClean,
-          emoji_hit: 1,
-        },
-      });
-      
-      console.log('[createEmoji] Emoji created:', {
-        emoji_id: created.emoji_id,
-        emoji_name: created.emoji_name,
-        emoji_hit: created.emoji_hit,
-      });
-      
-      return created;
+      try {
+        const created = await tx.emoji.create({
+          data: {
+            study_id: studyIdInt,
+            emoji_name: emojiNameClean,
+            emoji_hit: 1,
+          },
+        });
+        
+        console.log('[createEmoji] Emoji created:', {
+          emoji_id: created.emoji_id,
+          emoji_name: created.emoji_name,
+          emoji_hit: created.emoji_hit,
+        });
+        
+        return created;
+      } catch (error) {
+        if (error.code === 'P2002' || error.message?.includes('Unique constraint')) {
+          console.log('[createEmoji] Unique constraint error - emoji already exists, trying to find and update');
+          
+          const foundEmoji = await tx.emoji.findFirst({
+            where: {
+              study_id: studyIdInt,
+              emoji_name: emojiNameClean,
+            },
+          });
+          
+          if (foundEmoji) {
+            console.log('[createEmoji] Found existing emoji after unique constraint error:', {
+              emoji_id: foundEmoji.emoji_id,
+              emoji_name: foundEmoji.emoji_name,
+              emoji_hit: foundEmoji.emoji_hit,
+            });
+            
+            const updated = await tx.emoji.update({
+              where: { 
+                emoji_id: foundEmoji.emoji_id,
+              },
+              data: { 
+                emoji_hit: foundEmoji.emoji_hit + 1,
+              },
+            });
+            
+            console.log('[createEmoji] Emoji updated after unique constraint error:', {
+              emoji_id: updated.emoji_id,
+              emoji_name: updated.emoji_name,
+              emoji_hit: updated.emoji_hit,
+            });
+            
+            return updated;
+          }
+        }
+        throw error;
+      }
     });
   },
 
