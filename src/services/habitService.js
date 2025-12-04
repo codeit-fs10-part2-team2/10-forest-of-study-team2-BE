@@ -44,12 +44,17 @@ const habitService = {
     const weekHabits = await prisma.habit.findMany({
       where: {
         study_id: parseInt(studyId),
-        habitFullfillments: {
-          some: {
-            habit_fullfillment_year: year,
-            habit_fullfillment_week: week,
+        OR: [
+          { isRemoved: false },
+          {
+            habitFullfillments: {
+              some: {
+                habit_fullfillment_year: year,
+                habit_fullfillment_week: week,
+              },
+            },
           },
-        },
+        ],
       },
       include: {
         habitFullfillments: {
