@@ -89,6 +89,5 @@ model Emoji {
   // Relations
   study Study @relation(fields: [study_id], references: [study_id], onDelete: Cascade)
 
-  @@unique([study_id, emoji_name])
   @@map("Emoji")
 }
