@@ -7,18 +7,6 @@ const mime = require('mime-types');
 
 require('./config/database');
 
-const prisma = require('./lib/prisma');
-
-(async () => {
-  try {
-    await prisma.$connect();
-    await prisma.$executeRawUnsafe('SET time_zone = "+09:00"');
-    console.log('Database timezone initialized to Asia/Seoul (+09:00)');
-  } catch (error) {
-    console.warn('Failed to initialize database timezone:', error.message);
-  }
-})();
-
 mime.types['js'] = 'text/javascript';
 mime.types['mjs'] = 'text/javascript';
 
@@ -133,8 +121,28 @@ app.use((req, res) => {
 
 const PORT = process.env.PORT || 3000;
 
-app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
-});
+const prisma = require('./lib/prisma');
+
+const startServer = async () => {
+  try {
+    await prisma.$connect();
+    try {
+      await prisma.$executeRawUnsafe('SET time_zone = "+09:00"');
+      if (process.env.NODE_ENV === 'development') {
+        console.log('Database timezone set to Asia/Seoul (+09:00)');
+      }
+    } catch (tzError) {
+      console.warn('Timezone setting warning:', tzError.message);
+    }
+  } catch (error) {
+    console.error('Database connection warning:', error.message);
+  }
+
+  app.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT}`);
+  });
+};
+
+startServer();
 
 module.exports = app;
