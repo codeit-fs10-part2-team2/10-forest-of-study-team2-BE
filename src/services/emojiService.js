@@ -90,8 +90,8 @@ const emojiService = {
       try {
         const created = await tx.emoji.create({
           data: {
-            study_id: studyIdInt,
-            emoji_name: emojiNameClean,
+            study_id: study_id,
+            emoji_name: emoji_name,
             emoji_hit: 1,
           },
         });
