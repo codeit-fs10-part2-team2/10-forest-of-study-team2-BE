@@ -35,25 +35,29 @@ const emojiService = {
         emoji_hit: e.emoji_hit,
       })));
       
+      const requestEmojiBytes = Buffer.from(emojiNameClean).toString('hex');
+      
       const existingEmoji = allEmojis.find(e => {
-        const matches = e.emoji_name === emojiNameClean;
+        const dbEmojiBytes = Buffer.from(e.emoji_name).toString('hex');
+        const matches = dbEmojiBytes === requestEmojiBytes;
+        
         if (!matches) {
           console.log('[createEmoji] Emoji mismatch:', {
             db_emoji: e.emoji_name,
-            db_bytes: Buffer.from(e.emoji_name).toString('hex'),
+            db_bytes: dbEmojiBytes,
             request_emoji: emojiNameClean,
-            request_bytes: Buffer.from(emojiNameClean).toString('hex'),
+            request_bytes: requestEmojiBytes,
           });
         }
         return matches;
       });
 
-      console.log('[createEmoji] Existing emoji found after client-side comparison:', existingEmoji ? {
+      console.log('[createEmoji] Existing emoji found after byte comparison:', existingEmoji ? {
         emoji_id: existingEmoji.emoji_id,
         emoji_name: existingEmoji.emoji_name,
         emoji_name_bytes: Buffer.from(existingEmoji.emoji_name).toString('hex'),
         emoji_hit: existingEmoji.emoji_hit,
-        matches: existingEmoji.emoji_name === emojiNameClean,
+        matches: Buffer.from(existingEmoji.emoji_name).toString('hex') === requestEmojiBytes,
       } : null);
 
       if (existingEmoji) {
