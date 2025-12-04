@@ -13,33 +13,32 @@ const emojiService = {
     const studyIdInt = parseInt(study_id);
     const emojiNameClean = String(emoji_name);
     
-    const existingEmoji = await prisma.emoji.findUnique({
-      where: {
-        study_id_emoji_name: {
+    return await prisma.$transaction(async (tx) => {
+      const existingEmoji = await tx.emoji.findFirst({
+        where: {
           study_id: studyIdInt,
           emoji_name: emojiNameClean,
         },
-      },
-    });
-
-    if (existingEmoji) {
-      return await prisma.emoji.update({
-        where: { 
-          study_id_emoji_name: {
-            study_id: studyIdInt,
-            emoji_name: emojiNameClean,
-          },
-        },
-        data: { emoji_hit: existingEmoji.emoji_hit + 1 },
       });
-    }
 
-    return await prisma.emoji.create({
-      data: {
-        study_id: studyIdInt,
-        emoji_name: emojiNameClean,
-        emoji_hit: 1,
-      },
+      if (existingEmoji) {
+        return await tx.emoji.update({
+          where: { 
+            emoji_id: existingEmoji.emoji_id,
+          },
+          data: { 
+            emoji_hit: existingEmoji.emoji_hit + 1,
+          },
+        });
+      }
+
+      return await tx.emoji.create({
+        data: {
+          study_id: studyIdInt,
+          emoji_name: emojiNameClean,
+          emoji_hit: 1,
+        },
+      });
     });
   },
 
