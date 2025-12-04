@@ -13,7 +13,7 @@ const DB_SSL_MODE = process.env.DB_SSL_MODE || 'REQUIRED';
 const buildDatabaseUrl = () => {
   const encodedPassword = encodeURIComponent(DB_PASSWORD);
   
-  const databaseUrl = `mysql://${DB_ADMIN}:${encodedPassword}@${DB_URL}:${DB_PORT}/${DB_NAME}?ssl-mode=${DB_SSL_MODE}`;
+  const databaseUrl = `mysql://${DB_ADMIN}:${encodedPassword}@${DB_URL}:${DB_PORT}/${DB_NAME}?ssl-mode=${DB_SSL_MODE}&timezone=%2B09:00`;
   
   process.env.DATABASE_URL = databaseUrl;
   
