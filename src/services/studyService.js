@@ -69,12 +69,12 @@ const studyService = {
   },
 
   createStudy: async (studyData) => {
-    const { nickname, study_name, introduction, background, password, concentration_time } = studyData;
+    const { nickname, study_name, study_introduction, background, password, concentration_time } = studyData;
 
     const dataToCreate = {
       nickname,
       study_name: study_name,
-      study_introduction: introduction,
+      study_introduction: study_introduction,
       password,
       background: background || 0,
       point_sum: 0,
