@@ -159,6 +159,91 @@ studyRouter.get('/:id', async (req, res, next) => {
 
 /**
  * @swagger
+ * /api/studies/{id}/verify-password:
+ *   post:
+ *     summary: Verify study password
+ *     tags: [Studies]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Study ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - password
+ *             properties:
+ *               password:
+ *                 type: string
+ *                 description: Study password to verify
+ *     responses:
+ *       200:
+ *         description: Password verification result
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     verified:
+ *                       type: boolean
+ *                       description: Whether the password is correct
+ *       400:
+ *         description: Bad request - password is required
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       404:
+ *         description: Study not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+studyRouter.post('/:id/verify-password', async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { password } = req.body;
+
+    if (!password) {
+      return res.status(400).json({
+        success: false,
+        message: 'password가 필요합니다.',
+      });
+    }
+
+    const study = await studyService.getStudyById(id);
+    if (!study) {
+      return res.status(404).json({
+        success: false,
+        message: 'Study not found',
+      });
+    }
+
+    const verified = await studyService.verifyPassword(id, password);
+
+    res.json({
+      success: true,
+      data: { verified },
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+/**
+ * @swagger
  * /api/studies:
  *   post:
  *     summary: Create new study

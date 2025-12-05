@@ -218,6 +218,17 @@ const studyService = {
   getStudyById: async (studyId) => {
     return await prisma.study.findUnique({
       where: { study_id: parseInt(studyId) },
+      select: {
+        study_id: true,
+        nickname: true,
+        study_name: true,
+        study_introduction: true,
+        background: true,
+        point_sum: true,
+        concentration_time: true,
+        createdAt: true,
+        updatedAt: true,
+      },
     });
   },
 
