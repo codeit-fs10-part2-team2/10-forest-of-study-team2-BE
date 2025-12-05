@@ -223,7 +223,26 @@ const studyService = {
       return false;
     }
 
-    return await bcrypt.compare(password, study.password);
+    const storedPassword = study.password;
+    const isBcryptHash = storedPassword.startsWith('$2a$') || storedPassword.startsWith('$2b$') || storedPassword.startsWith('$2y$');
+
+    if (isBcryptHash) {
+      const isValid = await bcrypt.compare(password, storedPassword);
+      if (isValid) {
+        return true;
+      }
+      return false;
+    } else {
+      if (storedPassword === password) {
+        const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
+        await prisma.study.update({
+          where: { study_id: parseInt(studyId) },
+          data: { password: hashedPassword },
+        });
+        return true;
+      }
+      return false;
+    }
   },
 
   getTodayConcentration: async (studyId) => {

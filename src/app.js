@@ -54,6 +54,10 @@ app.use((req, res, next) => {
   next();
 });
 
+app.get('/health', (req, res) => {
+  res.json({ status: 'ok', message: 'Server is running' });
+});
+
 app.use(cors(corsOptions));
 
 app.use(express.json());
@@ -70,31 +74,6 @@ app.use('/api/studies', studyRouter);
 app.use('/api/points', pointRouter);
 app.use('/api/habits', habitRouter);
 app.use('/api/emojis', emojiRouter);
-
-/**
- * @swagger
- * /health:
- *   get:
- *     summary: Health check endpoint
- *     tags: [Health]
- *     responses:
- *       200:
- *         description: Server is running
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 status:
- *                   type: string
- *                   example: ok
- *                 message:
- *                   type: string
- *                   example: Server is running
- */
-app.get('/health', (req, res) => {
-  res.json({ status: 'ok', message: 'Server is running' });
-});
 
 app.use((err, req, res, next) => {
   if (err.message && err.message.includes('CORS')) {
@@ -123,6 +102,51 @@ const PORT = process.env.PORT || 3000;
 
 const prisma = require('./lib/prisma');
 
+const startKeepAlive = () => {
+  const http = require('http');
+  const https = require('https');
+  const keepAliveInterval = 14 * 60 * 1000;
+  
+  const keepAlive = () => {
+    const apiUrl = process.env.API_URL;
+    
+    if (apiUrl) {
+      const healthUrl = `${apiUrl}/health`;
+      const isHttps = healthUrl.startsWith('https://');
+      const client = isHttps ? https : http;
+      
+      client.get(healthUrl, (res) => {
+        if (process.env.NODE_ENV === 'development') {
+          console.log(`Keep-alive ping: ${healthUrl} - Status: ${res.statusCode}`);
+        }
+      }).on('error', () => {});
+    } else {
+      const options = {
+        hostname: 'localhost',
+        port: PORT,
+        path: '/health',
+        method: 'GET',
+      };
+      
+      const req = http.request(options, (res) => {
+        if (process.env.NODE_ENV === 'development') {
+          console.log(`Keep-alive ping: localhost:${PORT}/health - Status: ${res.statusCode}`);
+        }
+      });
+      
+      req.on('error', () => {});
+      req.end();
+    }
+  };
+
+  setTimeout(keepAlive, 60000);
+  setInterval(keepAlive, keepAliveInterval);
+  
+  if (process.env.NODE_ENV === 'development') {
+    console.log(`Keep-alive started: pinging every ${keepAliveInterval / 1000 / 60} minutes`);
+  }
+};
+
 const startServer = async () => {
   try {
     await prisma.$connect();
@@ -138,9 +162,12 @@ const startServer = async () => {
     console.error('Database connection warning:', error.message);
   }
 
-  app.listen(PORT, () => {
+  const server = app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
+    startKeepAlive();
   });
+
+  return server;
 };
 
 startServer();
