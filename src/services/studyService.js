@@ -1,6 +1,9 @@
 const prisma = require('../lib/prisma');
 const { StudyListDTO, StudyDetailDTO, TodayConcentrationDTO } = require('../dto/studyDTO');
 const { now } = require('../utils/dateUtils');
+const bcrypt = require('bcrypt');
+
+const SALT_ROUNDS = 10;
 
 const studyService = {
   getStudiesWithPaging: async (options = {}) => {
@@ -57,8 +60,56 @@ const studyService = {
       prisma.study.count({ where }),
     ]);
 
+    const studyIds = studies.map(study => study.study_id);
+
+    let topEmojisByStudyId = {};
+    let totalEmojiCountsByStudyId = {};
+
+    if (studyIds.length > 0) {
+      const [topEmojisMap, totalEmojiCountsMap] = await Promise.all([
+        Promise.all(
+          studyIds.map(async (studyId) => {
+            const topEmojis = await prisma.emoji.findMany({
+              where: { study_id: studyId },
+              orderBy: { emoji_hit: 'desc' },
+              take: 3,
+              select: {
+                emoji_id: true,
+                emoji_name: true,
+                emoji_hit: true,
+              },
+            });
+            return { studyId, topEmojis };
+          })
+        ),
+        prisma.emoji.groupBy({
+          by: ['study_id'],
+          where: {
+            study_id: { in: studyIds },
+          },
+          _count: {
+            emoji_id: true,
+          },
+        }),
+      ]);
+
+      topEmojisMap.forEach(({ studyId, topEmojis }) => {
+        topEmojisByStudyId[studyId] = topEmojis;
+      });
+
+      totalEmojiCountsMap.forEach((item) => {
+        totalEmojiCountsByStudyId[item.study_id] = item._count.emoji_id;
+      });
+    }
+
+    const studiesWithEmojis = studies.map(study => ({
+      ...study,
+      topEmojis: topEmojisByStudyId[study.study_id] || [],
+      totalEmojiCount: totalEmojiCountsByStudyId[study.study_id] || 0,
+    }));
+
     return {
-      studies: StudyListDTO.fromEntities(studies),
+      studies: StudyListDTO.fromEntities(studiesWithEmojis),
       pagination: {
         page: parseInt(page),
         limit: parseInt(limit),
@@ -75,10 +126,13 @@ const studyService = {
       nickname,
       study_name: study_name,
       study_introduction: study_introduction,
-      password,
       background: background || 0,
       point_sum: 0,
     };
+
+    if (password) {
+      dataToCreate.password = await bcrypt.hash(password, SALT_ROUNDS);
+    }
 
     if (concentration_time !== undefined) {
       dataToCreate.concentration_time = concentration_time;
@@ -99,7 +153,9 @@ const studyService = {
     if (study_name !== undefined) dataToUpdate.study_name = study_name;
     if (study_introduction !== undefined) dataToUpdate.study_introduction = study_introduction;
     if (background !== undefined) dataToUpdate.background = background;
-    if (password !== undefined) dataToUpdate.password = password;
+    if (password !== undefined && password !== null) {
+      dataToUpdate.password = await bcrypt.hash(password, SALT_ROUNDS);
+    }
 
     return await prisma.study.update({
       where: { study_id: parseInt(studyId)},
@@ -159,11 +215,15 @@ const studyService = {
       },
     });
 
-    if (!study) {
+    if (!study || !study.password) {
       return false;
     }
 
-    return study.password === password;
+    if (!password) {
+      return false;
+    }
+
+    return await bcrypt.compare(password, study.password);
   },
 
   getTodayConcentration: async (studyId) => {

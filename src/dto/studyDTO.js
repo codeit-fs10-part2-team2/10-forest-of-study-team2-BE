@@ -6,6 +6,8 @@ class StudyListDTO {
     this.point_sum = study.point_sum;
     this.background = study.background;
     this.createdAt = study.createdAt;
+    this.topEmojis = study.topEmojis || [];
+    this.totalEmojiCount = study.totalEmojiCount || 0;
   }
 
   static fromEntity(study) {
