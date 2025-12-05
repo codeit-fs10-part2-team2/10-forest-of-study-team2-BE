@@ -121,7 +121,13 @@ const habitService = {
       existingHabitMap.set(habit.habit_pk, habit);
     });
 
+    const existingHabitByNameMap = new Map();
+    existingHabits.forEach(habit => {
+      existingHabitByNameMap.set(habit.habit_name, habit);
+    });
+
     const newHabitPks = new Set();
+    const processedHabitNames = new Set();
     const result = {
       created: [],
       updated: [],
@@ -149,7 +155,18 @@ const habitService = {
 
           if (existingHabit.habit_name === habit_name) {
             result.unchanged.push(existingHabit);
+            processedHabitNames.add(habit_name);
           } else {
+            if (processedHabitNames.has(habit_name)) {
+              newHabitPks.add(habitPkInt);
+              await tx.habit.update({
+                where: { habit_pk: habitPkInt },
+                data: { isRemoved: true },
+              });
+              result.removed.push(habitPkInt);
+              continue;
+            }
+
             const duplicateCheck = await tx.habit.findFirst({
               where: {
                 study_id: studyIdInt,
@@ -166,6 +183,7 @@ const habitService = {
                 data: { isRemoved: true },
               });
               result.removed.push(habitPkInt);
+              processedHabitNames.add(habit_name);
               continue;
             }
 
@@ -175,15 +193,24 @@ const habitService = {
             });
             result.updated.push(updated);
             existingHabitMap.set(habitPkInt, updated);
+            existingHabitByNameMap.set(habit_name, updated);
+            processedHabitNames.add(habit_name);
           }
         } else {
-          const existingByName = existingHabits.find(
-            h => h.habit_name === habit_name && !h.isRemoved
-          );
+          if (processedHabitNames.has(habit_name)) {
+            const existingByName = existingHabitByNameMap.get(habit_name);
+            if (existingByName) {
+              newHabitPks.add(existingByName.habit_pk);
+            }
+            continue;
+          }
+
+          const existingByName = existingHabitByNameMap.get(habit_name);
 
           if (existingByName) {
             newHabitPks.add(existingByName.habit_pk);
             result.unchanged.push(existingByName);
+            processedHabitNames.add(habit_name);
           } else {
             const duplicateCheck = await tx.habit.findFirst({
               where: {
@@ -196,6 +223,8 @@ const habitService = {
             if (duplicateCheck) {
               newHabitPks.add(duplicateCheck.habit_pk);
               result.unchanged.push(duplicateCheck);
+              existingHabitByNameMap.set(habit_name, duplicateCheck);
+              processedHabitNames.add(habit_name);
             } else {
               const created = await tx.habit.create({
                 data: {
@@ -206,7 +235,9 @@ const habitService = {
               });
               result.created.push(created);
               existingHabitMap.set(created.habit_pk, created);
+              existingHabitByNameMap.set(habit_name, created);
               newHabitPks.add(created.habit_pk);
+              processedHabitNames.add(habit_name);
             }
           }
         }
