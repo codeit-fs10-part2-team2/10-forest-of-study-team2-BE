@@ -151,9 +151,9 @@ const startServer = async () => {
   try {
     await prisma.$connect();
     try {
-      await prisma.$executeRawUnsafe('SET time_zone = "+09:00"');
+      await prisma.$executeRawUnsafe('SET time_zone = "+08:00"');
       if (process.env.NODE_ENV === 'development') {
-        console.log('Database timezone set to Asia/Seoul (+09:00)');
+        console.log('Database timezone set to Asia/Singapore (+08:00)');
       }
     } catch (tzError) {
       console.warn('Timezone setting warning:', tzError.message);

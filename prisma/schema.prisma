@@ -16,8 +16,8 @@ model Study {
   background         Int?
   point_sum          Int      @default(0)
   concentration_time String?  @db.VarChar(8)
-  createdAt          DateTime @default(now()) @map("createdAt")
-  updatedAt          DateTime? @updatedAt @map("updatedAt")
+  createdAt          DateTime @map("createdAt")
+  updatedAt          DateTime? @map("updatedAt")
 
   points             Point[]
   habits             Habit[]
@@ -32,8 +32,8 @@ model Point {
   study_id      Int
   point_content String    @db.VarChar(255)
   point         Int?
-  createdAt     DateTime  @default(now()) @map("createdAt")
-  updatedAt     DateTime? @updatedAt @map("updatedAt")
+  createdAt     DateTime  @map("createdAt")
+  updatedAt     DateTime? @map("updatedAt")
 
   study Study @relation(fields: [study_id], references: [study_id], onDelete: Cascade)
 
@@ -45,8 +45,8 @@ model Habit {
   study_id   Int
   habit_name String    @db.VarChar(255)
   isRemoved  Boolean   @default(false)
-  createdAt  DateTime  @default(now()) @map("createdAt")
-  updatedAt  DateTime? @updatedAt @map("updatedAt")
+  createdAt  DateTime  @map("createdAt")
+  updatedAt  DateTime? @map("updatedAt")
 
   study            Study                 @relation(fields: [study_id], references: [study_id], onDelete: Cascade)
   habitFullfillments HabitFullfillment[]
@@ -62,8 +62,8 @@ model HabitFullfillment {
   habit_fullfillment_year     Int
   habit_fullfillment_week     Int
   habit_fullfillment_day      Int
-  createdAt                   DateTime  @default(now()) @map("createdAt")
-  updatedAt                   DateTime? @updatedAt @map("updatedAt")
+  createdAt                   DateTime  @map("createdAt")
+  updatedAt                   DateTime? @map("updatedAt")
 
   habit Habit @relation(fields: [habit_pk], references: [habit_pk], onDelete: Restrict)
   study Study? @relation(fields: [study_id], references: [study_id], onDelete: Cascade)
@@ -76,8 +76,8 @@ model Emoji {
   study_id   Int
   emoji_name String    @db.VarChar(255)
   emoji_hit  Int       @default(0)
-  createdAt  DateTime  @default(now()) @map("createdAt")
-  updatedAt  DateTime? @updatedAt @map("updatedAt")
+  createdAt  DateTime  @map("createdAt")
+  updatedAt  DateTime? @map("updatedAt")
 
   study Study @relation(fields: [study_id], references: [study_id], onDelete: Cascade)
 

@@ -25,7 +25,13 @@ const habitService = {
             habit_fullfillment_week: week,
             habit_fullfillment_day: day,
           },
+          orderBy: {
+            createdAt: 'asc',
+          },
         },
+      },
+      orderBy: {
+        createdAt: 'asc',
       },
     });
 
@@ -62,7 +68,13 @@ const habitService = {
             habit_fullfillment_year: year,
             habit_fullfillment_week: week,
           },
+          orderBy: {
+            createdAt: 'asc',
+          },
         },
+      },
+      orderBy: {
+        createdAt: 'asc',
       },
     });
 
@@ -136,8 +148,6 @@ const habitService = {
     };
 
     await prisma.$transaction(async (tx) => {
-      await tx.$executeRaw`SET time_zone = '+09:00'`;
-      
       for (const habitData of habitsData) {
         const { habit_pk, habit_name } = habitData;
         
@@ -351,7 +361,7 @@ const habitService = {
         },
       },
       orderBy: {
-        createdAt: 'desc',
+        createdAt: 'asc',
       },
     });
 
@@ -366,7 +376,7 @@ const habitService = {
     return await prisma.habit.findMany({
       where: { isRemoved: false },
       include: { study: true },
-      orderBy: { createdAt: 'desc' },
+      orderBy: { createdAt: 'asc' },
     });
   },
 
@@ -376,7 +386,7 @@ const habitService = {
         study_id: parseInt(studyId),
         isRemoved: false,
       },
-      orderBy: { createdAt: 'desc' },
+      orderBy: { createdAt: 'asc' },
     });
   },
 
