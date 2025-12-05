@@ -14,6 +14,8 @@ const emojiService = {
     const emojiNameClean = String(emoji_name);
     
     return await prisma.$transaction(async (tx) => {
+      await tx.$executeRaw`SET time_zone = '+09:00'`;
+      
       const allEmojis = await tx.emoji.findMany({
         where: {
           study_id: studyIdInt,
@@ -45,6 +47,9 @@ const emojiService = {
           emoji_hit: 1,
         },
       });
+    }, {
+      maxWait: 10000,
+      timeout: 30000,
     });
   },
 

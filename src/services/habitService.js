@@ -136,6 +136,8 @@ const habitService = {
     };
 
     await prisma.$transaction(async (tx) => {
+      await tx.$executeRaw`SET time_zone = '+09:00'`;
+      
       for (const habitData of habitsData) {
         const { habit_pk, habit_name } = habitData;
         
@@ -254,6 +256,9 @@ const habitService = {
         });
         result.removed.push(habit.habit_pk);
       }
+    }, {
+      maxWait: 10000,
+      timeout: 30000,
     });
 
     return result;
