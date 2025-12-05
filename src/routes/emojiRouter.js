@@ -90,9 +90,23 @@ emojiRouter.post('/', async (req, res, next) => {
 emojiRouter.post('/:emojiId/increment', async (req, res, next) => {
   try {
     const { emojiId } = req.params;
+    
+    if (!emojiId) {
+      return res.status(400).json({
+        success: false,
+        message: 'emojiId가 필요합니다.',
+      });
+    }
+
     const emoji = await emojiService.incrementEmojiHit(emojiId);
     res.json({ success: true, data: emoji });
   } catch (error) {
+    if (error.message === 'Emoji not found') {
+      return res.status(404).json({
+        success: false,
+        message: error.message,
+      });
+    }
     next(error);
   }
 });

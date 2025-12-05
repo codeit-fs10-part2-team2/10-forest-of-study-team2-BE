@@ -33,7 +33,7 @@ const emojiService = {
             emoji_id: existingEmoji.emoji_id,
           },
           data: { 
-            emoji_hit: existingEmoji.emoji_hit + 1,
+            emoji_hit: { increment: 1 },
           },
         });
       }
@@ -49,18 +49,26 @@ const emojiService = {
   },
 
   incrementEmojiHit: async (emojiId) => {
-    const emoji = await prisma.emoji.findUnique({
-      where: { emoji_id: parseInt(emojiId) },
-    });
-
-    if (!emoji) {
-      throw new Error('Emoji not found');
+    if (!emojiId || emojiId === 'undefined' || emojiId === 'null') {
+      throw new Error('emojiId is required');
     }
 
-    return await prisma.emoji.update({
-      where: { emoji_id: parseInt(emojiId) },
-      data: { emoji_hit: emoji.emoji_hit + 1 },
-    });
+    const emojiIdInt = parseInt(emojiId);
+    if (isNaN(emojiIdInt)) {
+      throw new Error('Invalid emojiId');
+    }
+
+    try {
+      return await prisma.emoji.update({
+        where: { emoji_id: emojiIdInt },
+        data: { emoji_hit: { increment: 1 } },
+      });
+    } catch (error) {
+      if (error.code === 'P2025') {
+        throw new Error('Emoji not found');
+      }
+      throw error;
+    }
   },
 
   deleteEmoji: async (emojiId) => {
