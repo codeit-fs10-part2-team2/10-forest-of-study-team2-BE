@@ -8,6 +8,7 @@ const getAllowedOrigins = () => {
     'http://127.0.0.1:5173',
     'https://forestofstudy-ew74jenyo-taetaehoos-projects.vercel.app',
     'https://foreststudy.netlify.app',
+    'https://10-forest-of-study-team2-fe-wamf.vercel.app/'
   ];
   
   if (process.env.CORS_ORIGIN) {
